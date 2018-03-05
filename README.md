@@ -4,6 +4,6 @@ An implementation of the [H2 Database Engine](http://www.h2database.com/) that i
 
 # Use
 
-Put the h2.jar into [DatabaseInductiveMiner] (https://svn.win.tue.nl/repos/prom/Packages/DatabaseInductiveMiner/) package in ProM.
+Put the h2.jar into [DatabaseInductiveMiner](https://svn.win.tue.nl/repos/prom/Packages/DatabaseInductiveMiner/) package in ProM.
 
 
