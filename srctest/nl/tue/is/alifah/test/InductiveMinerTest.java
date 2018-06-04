@@ -92,6 +92,28 @@ public class InductiveMinerTest {
 		return dfg;	
 	}
 	
+	public static Dfg weaklyFollowsOperator(String logName) throws SQLException, IOException {
+		stat.setFetchSize(10000);
+		
+		// abstraction
+		startTimeMeasurement();		
+		rs = stat.executeQuery("SELECT * FROM FOLLOWS(SELECT caseid,activity,completetimestamp FROM " + logName + ")");
+		double timeTaken = printTimeTaken();
+		avgAbstraction += timeTaken;
+		System.out.println(timeTaken);
+		
+		// retrieval
+	/*	startTimeMeasurement();	
+		Dfg dfg = createDfg(rs);
+		double timeTaken2 = printTimeTaken();
+		avgRetrieval += timeTaken2;
+		System.out.println(timeTaken2);
+		
+		rs.close();		*/
+		//return dfg;
+		return null;
+	}
+	
 	public static Dfg builtIn(String logName) throws SQLException, IOException {
 		stat.setFetchSize(10000);
 		
@@ -281,9 +303,9 @@ public class InductiveMinerTest {
 
 	public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
 		
-		String[] logs = {"jan-feb-BPI2017"}; // set of logs
+		String[] logs = {"t128Ka50i"}; // set of logs
 		int i = 0;
-		int iteration = 1;
+		int iteration = 3;
 		
 		System.out.println(iteration);
 
@@ -307,16 +329,18 @@ public class InductiveMinerTest {
 				stat = conn.createStatement();				
 				stat.execute("SET MULTI_THREADED 1");
 				
-				loadLog(fileName);
+				//loadLog(fileName);
 				
 				//Dfg dfg = directlyFollowsOperator(fileName);
+				Dfg dfg = weaklyFollowsOperator(fileName);
 				//Dfg dfg = sortedLogApproach(fileName);		
 				//Dfg dfg = builtIn(fileName);
 				
-				//discover(dfg);
+				if(dfg!= null)
+				discover(dfg);				
 				
 				out.close();
-				conn.close();
+				conn.close(); // closing takes time in native
 				stat.close();
 				System.gc();
 			}

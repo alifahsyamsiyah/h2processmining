@@ -25,24 +25,22 @@ public class DirectlyFollowsTest {
 		startTimeMeasurement();		
 		stat.execute("CREATE TABLE IF NOT EXISTS " + logName
 				+ " AS SELECT "
-				+ "'case' as CaseID,"
-				+ "'event' as Activity,"
+				+ "cases as CaseID,"
+				+ "event as Activity,"
 				+ "convert(parseDateTime(startTime,'yyyy/MM/dd HH:mm:ss.SSS'),TIMESTAMP) AS CompleteTimestamp"
-				//+ "Variant,"
-				//+ "VariantIndex "
 				+ " FROM CSVREAD('C:/Users/asyamsiy/workspace/h2processmining-master/resources/"+logName+".csv', null, 'fieldSeparator=,');");
-		stat.execute("CREATE INDEX IF NOT EXISTS CaseID_idx ON "+logName+"(CaseID)");
-		stat.execute("CREATE INDEX IF NOT EXISTS Activity_idx ON "+logName+"(Activity)");
-		stat.execute("CREATE INDEX IF NOT EXISTS CompleteTimestamp_idx ON "+logName+"(CompleteTimestamp)");
+		//stat.execute("CREATE INDEX IF NOT EXISTS CaseID_idx_" +logName+ " ON "+logName+"(CaseID)");
+		//stat.execute("CREATE INDEX IF NOT EXISTS Activity_idx ON "+logName+"(Activity)");
+		//stat.execute("CREATE INDEX IF NOT EXISTS CompleteTimestamp_idx_" +logName+ "  ON "+logName+"(CompleteTimestamp)");
 		printTimeTaken();
 
 		//Execute a simple query first, because otherwise the indexes do not seem to be initialized, 
 		//which causes a very slow response in the nested query.
-		stat.executeQuery(
+		/*stat.executeQuery(
 				"  SELECT DISTINCT a.Activity, b.Activity "
 				+ "FROM "+"Event_Log"+" a, "+"Event_Log"+" b "
 				+ "WHERE a.CaseID = b.CaseID AND a.CompleteTimestamp < b.CompleteTimestamp"
-				);
+				);*/
 	}
 	
 	public static void startTimeMeasurement(){
@@ -113,17 +111,17 @@ public class DirectlyFollowsTest {
 	}
 
 	public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
-		out = new BufferedWriter(new FileWriter("C:\\Users\\asyamsiy\\Documents\\Experiment\\h2\\result\\h2.txt", false));
+		out = new BufferedWriter(new FileWriter("C:\\Users\\asyamsiy\\Documents\\Experiment\\h2\\result\\h2weak.txt", false));
 		
 		Class.forName("org.h2.Driver");
-		conn = DriverManager.getConnection("jdbc:h2:tcp://ais-hadoop-1.win.tue.nl/~/test2;cache_size=60000000;multi_threaded=1", "sa", "");
-		//conn = DriverManager.getConnection("jdbc:h2:tcp://localhost/~/test", "sa", "");
-		//conn = DriverManager.getConnection("jdbc:h2:mem:", "sa", "");
+		//conn = DriverManager.getConnection("jdbc:h2:tcp://ais-hadoop-1.win.tue.nl/~/test2;cache_size=60000000;multi_threaded=1", "sa", "");
+		//conn = DriverManager.getConnection("jdbc:h2:tcp://localhost/~/test2", "sa", "");
+		conn = DriverManager.getConnection("jdbc:h2:mem:", "sa", "");
         
 		stat = conn.createStatement();
 		
-		//loadLog("tess2");
-		directlyFollowsOperator("t1500Ka100");
+		loadLog("t1Ka30");
+		directlyFollowsOperator("t1Ka30");
 		//sortedLogApproach();
 		
 		out.close();

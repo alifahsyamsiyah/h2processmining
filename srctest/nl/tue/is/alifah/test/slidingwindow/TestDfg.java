@@ -37,8 +37,8 @@ public class TestDfg {
 								"start,b,1",
 								"start,c,1",
 								"start,d,1"};*/
-		
-		String[] log = {"a,c,1" , "a,b,1" , "b,a,1" , "start,a,2" , "c,end,1"};
+		//String[] log = {"a,b,1" , "b,c,1" , "a,c,1" , "c,b,1", "start,a,2" , "b,end,2", "c,end,2"};
+		String[] log = {"a,c,1" , "a,b,1" , "start,a,2" , "b,end,1", "c,end,1"};
 		
 		// add pair of activities to DFG
 		for(int i = 0; i < log.length; i++) {

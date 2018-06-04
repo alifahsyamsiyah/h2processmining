@@ -2534,11 +2534,11 @@ public class Parser {
         	Database db = session.getDatabase();
         	Schema schemaForFunction = (schema != null)?getSchema():database.getSchema(session.getCurrentSchemaName());
             functionAlias = FunctionAlias.newInstance(schemaForFunction, db.allocateObjectId(),
-                    "DIRECTLYFOLLOWS", "org.h2.util.DirectlyFollows.directlyFollows", false, true);
+                    "DIRECTLYFOLLOWS", "org.h2.util.DirectlyWeaklyFollows.directlyFollows", false, true);
             functionAlias.setDeterministic(false);
             db.addSchemaObject(session, functionAlias);
             System.out.println("create function alias");
-        }   else if ((functionAlias == null) && functionName.equalsIgnoreCase("CONTROLLER")) {
+        } else if ((functionAlias == null) && functionName.equalsIgnoreCase("CONTROLLER")) {
         	Database db = session.getDatabase();
         	Schema schemaForFunction = (schema != null)?getSchema():database.getSchema(session.getCurrentSchemaName());
             functionAlias = FunctionAlias.newInstance(schemaForFunction, db.allocateObjectId(),
@@ -2551,6 +2551,14 @@ public class Parser {
         	Schema schemaForFunction = (schema != null)?getSchema():database.getSchema(session.getCurrentSchemaName());
             functionAlias = FunctionAlias.newInstance(schemaForFunction, db.allocateObjectId(),
                     "AUTOFOLLOWS", "org.h2.util.AutoFollows.autoFollows", false, true);
+            functionAlias.setDeterministic(false);
+            db.addSchemaObject(session, functionAlias);
+        }    else if ((functionAlias == null) && functionName.equalsIgnoreCase("RULECHECK")) {
+        	System.out.println("find rule checking");
+        	Database db = session.getDatabase();
+        	Schema schemaForFunction = (schema != null)?getSchema():database.getSchema(session.getCurrentSchemaName());
+            functionAlias = FunctionAlias.newInstance(schemaForFunction, db.allocateObjectId(),
+                    "RULECHECK", "org.h2.util.RuleChecking.ruleChecking", false, true);
             functionAlias.setDeterministic(false);
             db.addSchemaObject(session, functionAlias);
         }   

@@ -18,11 +18,11 @@ import java.util.Set;
 
 import org.h2.tools.SimpleResultSet;
 
-public class DirectlyFollows {	
+public class DirectlyWeaklyFollows {	
 	
 	public static ResultSet directlyFollows(Connection conn, ResultSet eventLog) throws SQLException {
 		
-		System.out.println("enter directly follows " + System.nanoTime());
+		System.out.println("enter directly weakly follows " + System.nanoTime());
 		
 		class LogEvent implements Comparable<LogEvent> {
 			long time;
@@ -62,28 +62,14 @@ public class DirectlyFollows {
 		Map<Object,List<LogEvent>> caseId2Sequence = new HashMap<Object,List<LogEvent>>();
 		//Map for directly follows relations
 		Map<String, Integer> directlyFollows = new HashMap<String, Integer>();
-		//Map for the last event in a trace
-		//Map<Object, String> lastEvents = new HashMap<Object, String>();
 		
 		//For each event in the event log:
 		while (eventLog.next()){
 			String caseId = null, eventClass = null;
 			Timestamp timestamp = null;
-			//STILL BUG
-			/*if(eventLog.getMetaData().getColumnCount() == 1) {
-				String tuple = eventLog.getString(1);
-				System.out.println("tuple " + tuple);
-				String nontuple = tuple.substring(1, tuple.length() - 1);
-				String[] arr = nontuple.split(", ");
-				caseId = arr[0];
-				eventClass = arr[1];
-				timestamp = Timestamp.valueOf(arr[2]);			
-				System.out.println(caseId + " " + eventClass);
-			} else {*/
-				caseId = eventLog.getString(1);		
-				eventClass = eventLog.getString(2);
-				timestamp = eventLog.getTimestamp(3);
-			//}
+			caseId = eventLog.getString(1);		
+			eventClass = eventLog.getString(2);
+			timestamp = eventLog.getTimestamp(3);
 			
 			List<LogEvent> sequence = caseId2Sequence.get(caseId);
 			if (sequence == null){
@@ -92,64 +78,48 @@ public class DirectlyFollows {
 			}
 			//Add the event to the sequence that belongs to the case identifier of that event. 
 			sequence.add(new LogEvent(timestamp.getTime(), eventClass));
-			//System.out.println("timestamp: " + timestamp + " getTime: " + timestamp.getTime());
 		}
 		
-		/*//For each sequence that is constructed in this manner:
+		//For each sequence that is constructed in this manner:
 		for (List<LogEvent> sequence: caseId2Sequence.values()){
 			//Sort the sequence.
-			Collections.sort(sequence);		*/
-			
-		for (Object caseId : caseId2Sequence.keySet()) {
-			
-			List<LogEvent> sequence = caseId2Sequence.get(caseId);
-			Collections.sort(sequence);		
-			//String lastEvent = null;
-			
-			for(int i = 0; i < sequence.size(); i++) {
-				// start event class
-				if(i == 0) {
-					String ec1 = "START";
-					String ec2 = (String) sequence.get(i).label;						
-					
-					String key = ec1 + "---" + ec2;
-					
-					Integer val = directlyFollows.get(key);
-					Integer temp = (val == null) ? directlyFollows.put(key, 1) : directlyFollows.put(key, val + 1);
-					
-					//lastEvent = ec2;
-					
-				}
-				// end event class
-				if(i == sequence.size() - 1) {
-					String ec1 = (String) sequence.get(i).label;
-					String ec2 = "END";
-					
-					String key = ec1 + "---" + ec2;
-					
-					Integer val = directlyFollows.get(key);
-					Integer temp = (val == null) ? directlyFollows.put(key, 1) : directlyFollows.put(key, val + 1);		
-					
-				} else { 
-					
-				// pair
-				//if(i != sequence.size() - 1) {
-					String ec1 = (String) sequence.get(i).label;
-					String ec2 = sequence.get(i+1).label;
-					
-					String key = ec1 + "---" + ec2;					
-					Integer val = directlyFollows.get(key);
-					Integer temp = (val == null) ? directlyFollows.put(key, 1) : directlyFollows.put(key, val + 1);		
-					
-					
-					//lastEvent = ec2;
-				}				
+			Collections.sort(sequence);
+			int sa = 0; //start index of the antecedents
+			int ea = 0; //end index of the antecedents, this is the index of the last event that has the same timestamp as sequence[sa]
+			long aTime = sequence.get(sa).time;
+			while ((ea+1 < sequence.size()) && (aTime == sequence.get(ea+1).time)){
+				ea++;
 			}
-			
-			//lastEvents.put(caseId, lastEvent);
-			
+			int sc = ea+1; //start index of the consequents
+			int ec = sc; //end index of the consequents, this is the index of the last event that has the same timestamp as sequence[sc]
+			//While there are consequents:
+			while (ec < sequence.size()){
+				long cTime = sequence.get(sc).time;
+				while ((ec+1 < sequence.size()) && (cTime == sequence.get(ec+1).time)){
+					ec++;
+				}
+				//Add all antecendent/consequent combinations to antecedent2consequents.
+				for (int i = sa; i <= ea; i++){
+					String antecedentStr = sequence.get(i).label;		
+					for (int j = sc; j <= ec; j++){
+						String consequentStr = sequence.get(j).label;
+						String pair = antecedentStr + "---" + consequentStr;
+						Integer counter = directlyFollows.get(pair);
+						if(counter == null) {
+							directlyFollows.put(pair, 1);
+						} else {
+							counter++;
+							directlyFollows.put(pair, counter);
+						}
+					}
+				}
+				//Go the the next batch of antercedents/consequents.
+				sa = sc;
+				ea = ec;
+				sc = ea+1;
+				ec = sc;
+			}
 		}
-		
 		
 		//Create the result.
 		SimpleResultSet result = new SimpleResultSet();
@@ -167,21 +137,8 @@ public class DirectlyFollows {
 		}
 		
 	    eventLog.getStatement().close();
-	    
-	    /*// create table last_event
-	    Statement stat = conn.createStatement();
-	    stat.execute("drop table if exists last_event");
-	    stat.execute("create table last_event(caseid varchar(255), event_label varchar(255));");
-		
-	    String insertquery = "";
-	    for (Object caseId : lastEvents.keySet()) {
-	    	insertquery = insertquery +  "('" + caseId + "','" + lastEvents.get(caseId) + "'),";
-	    }
-	    insertquery = insertquery.substring(0, insertquery.length()-1);
 	    	    
-	    stat.execute("insert into last_event values " + insertquery);*/
-	    
-	    System.out.println("end directly follows");
+	    System.out.println("end directly weakly follows");
 		
 		return result;
 	}
